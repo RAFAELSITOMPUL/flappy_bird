@@ -1,4 +1,4 @@
-name: Build & Release Flappy Bird (Android & Windows)
+name: Build & Release Flappy Bird (Windows Desktop)
 
 on:
   push:
@@ -14,80 +14,11 @@ env:
   PROJECT_PATH: .
 
 jobs:
-  # ====================================================================
-  # JOB 1: ANDROID APK BUILD (Independent Ubuntu Runner)
-  # ====================================================================
-  android-build:
-    name: 📱 Build Android APK
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-        with:
-          lfs: true
-
-      - name: Setup Java JDK 17
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: '17'
-
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
-
-      - name: Accept Android SDK Licenses & Setup Build Tools
-        run: |
-          yes | sdkmanager --licenses || true
-          sdkmanager --install "platform-tools" "build-tools;34.0.0" "platforms;android-34" "cmdline-tools;latest"
-
-      - name: Setup Godot ${{ env.GODOT_VERSION }} Linux & Export Templates
-        run: |
-          mkdir -p ~/.local/share/godot/export_templates/${{ env.GODOT_VERSION }}.stable
-          curl -LO https://github.com/godotengine/godot/releases/download/${{ env.GODOT_VERSION }}-stable/Godot_v${{ env.GODOT_VERSION }}-stable_linux.x86_64.zip
-          unzip -q Godot_v${{ env.GODOT_VERSION }}-stable_linux.x86_64.zip
-          mv Godot_v${{ env.GODOT_VERSION }}-stable_linux.x86_64 /usr/local/bin/godot
-          
-          curl -LO https://github.com/godotengine/godot/releases/download/${{ env.GODOT_VERSION }}-stable/Godot_v${{ env.GODOT_VERSION }}-stable_export_templates.tpz
-          unzip -q Godot_v${{ env.GODOT_VERSION }}-stable_export_templates.tpz
-          mv templates/* ~/.local/share/godot/export_templates/${{ env.GODOT_VERSION }}.stable/
-
-      - name: Generate Android Debug Keystore
-        run: |
-          mkdir -p ~/.android
-          keytool -keyalg RSA -genkeypair -alias androiddebugkey -keypass android -keystore ~/.android/debug.keystore -storepass android -dname "CN=Android Debug,O=Android,C=US" -validity 9999 -deststoretype pkcs12
-          cp ~/.android/debug.keystore ./debug.keystore
-          
-          # Inject keystore path directly into export_presets.cfg
-          sed -i 's|keystore/debug=""|keystore/debug="'"$PWD/debug.keystore"'"|g' export_presets.cfg
-          sed -i 's|keystore/debug_user=""|keystore/debug_user="androiddebugkey"|g' export_presets.cfg
-          sed -i 's|keystore/debug_password=""|keystore/debug_password="android"|g' export_presets.cfg
-
-      - name: Export Android APK
-        run: |
-          mkdir -p builds/android release
-          godot --headless --export-debug "Android" builds/android/FlappyBird.apk
-          
-          # VALIDATE APK FILE
-          if [ -s "builds/android/FlappyBird.apk" ]; then
-            echo "SUCCESS: FlappyBird.apk created successfully! Size: $(stat -c%s builds/android/FlappyBird.apk) bytes"
-            cp builds/android/FlappyBird.apk release/FlappyBird-Android.apk
-          else
-            echo "ERROR: Android export failed: FlappyBird.apk not found or empty!"
-            exit 1
-          fi
-
-      - name: Upload Android APK Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: FlappyBird-Android-APK
-          path: release/FlappyBird-Android.apk
-
-  # ====================================================================
-  # JOB 2: WINDOWS BUILD & INSTALLER (Independent Windows Runner)
-  # ====================================================================
   windows-build:
     name: 💻 Build Windows EXE & Installer
     runs-on: windows-latest
+    permissions:
+      contents: write
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -176,68 +107,36 @@ jobs:
             release/FlappyBird-Windows.zip
             release/FlappyBird.exe
 
-  # ====================================================================
-  # JOB 3: GITHUB RELEASE PUBLISHER (Runs when tag or manual trigger)
-  # ====================================================================
-  release:
-    name: 🚀 Create GitHub Release
-    needs: [android-build, windows-build]
-    if: always() && (needs.android-build.result == 'success' || needs.windows-build.result == 'success')
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - name: Download Android Artifact
-        uses: actions/download-artifact@v4
-        continue-on-error: true
-        with:
-          name: FlappyBird-Android-APK
-          path: release/
-
-      - name: Download Windows Artifacts
-        uses: actions/download-artifact@v4
-        continue-on-error: true
-        with:
-          name: FlappyBird-Windows-Builds
-          path: release/
-
-      - name: Check Artifacts List
-        run: |
-          mkdir -p release
-          ls -la release/
-
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            release/FlappyBird-Android.apk
             release/FlappyBird-Setup.exe
             release/FlappyBird-Windows.zip
             release/FlappyBird.exe
           tag_name: v1.0.0
-          name: "FLAPPY BIRD 2D v1.0.0 (Android & Windows Release)"
+          name: "FLAPPY BIRD 2D v1.0.0 (Windows Release)"
           draft: false
           prerelease: false
           body: |
-            ## 🎮 FLAPPY BIRD 2D (Official Release v1.0.0)
+            ## 🎮 FLAPPY BIRD 2D (Windows Desktop Official Release)
             
-            Game Flappy Bird 2D siap dimainkan di Android dan Windows!
-            
-            ---
-            
-            ### 📱 Android
-            - **`FlappyBird-Android.apk`**: Download langsung dan install di HP Android Anda.
+            Game Flappy Bird 2D siap dimainkan di PC / Laptop Windows!
             
             ---
             
-            ### 💻 Windows Desktop
-            - **`FlappyBird-Setup.exe`** *(Rekomendasi)*:
-              - Installer Resmi Windows (Hak Administrator).
-              - Otomatis terpasang di SSD: `C:\FlappyBird\`.
-              - Shortcut di Desktop & Start Menu.
-              - Uninstaller resmi di Windows Settings / Installed Apps.
-            - **`FlappyBird-Windows.zip`**: Versi Portable ZIP (Extract lalu jalankan).
-            - **`FlappyBird.exe`**: File standalone mandiri.
+            ### 📥 Pilihan Download:
+            1. **`FlappyBird-Setup.exe`** *(Sangat Direkomendasikan)*:
+               - **Installer Resmi Windows 11 / 10**: Otomatis meminta hak **Administrator**.
+               - Otomatis memasang game ke folder SSD: **`C:\FlappyBird\`**.
+               - Otomatis membuat shortcut di **Desktop** & **Start Menu**.
+               - Dilengkapi **Uninstaller Resmi** di Windows Control Panel / Settings.
+            
+            2. **`FlappyBird-Windows.zip`**:
+               - Versi Portable (Download -> Extract -> Langsung main).
+            
+            3. **`FlappyBird.exe`**:
+               - Executable game standalone mandiri.
             
             ---
             
