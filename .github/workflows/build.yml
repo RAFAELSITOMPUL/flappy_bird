@@ -7,10 +7,6 @@ on:
       - master
     tags:
       - 'v*'
-  pull_request:
-    branches:
-      - main
-      - master
   workflow_dispatch:
 
 env:
@@ -18,9 +14,11 @@ env:
   PROJECT_PATH: .
 
 jobs:
-  build-windows:
-    name: 💻 Build Windows Desktop
+  build-and-release:
+    name: 💻 Build & Release Windows Desktop
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -49,39 +47,28 @@ jobs:
           zip -r ../../release/FlappyBird-Windows.zip .
           cd ../..
 
-      - name: Upload Windows Artifact
+      - name: Upload Windows Artifact to Actions
         uses: actions/upload-artifact@v4
         with:
           name: FlappyBird-Windows
           path: release/FlappyBird-Windows.zip
 
-  release:
-    name: 🚀 Create GitHub Release
-    needs: [build-windows]
-    if: startsWith(github.ref, 'refs/tags/v')
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - name: Download Windows Artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: FlappyBird-Windows
-          path: release/
-
-      - name: Publish GitHub Release
+      - name: Publish GitHub Release (Latest)
         uses: softprops/action-gh-release@v2
         with:
           files: release/FlappyBird-Windows.zip
-          name: FLAPPY BIRD ${{ github.ref_name }}
+          tag_name: v1.0.0
+          name: "FLAPPY BIRD 2D v1.0.0 (Windows Build)"
           draft: false
           prerelease: false
           body: |
             ## 🎮 FLAPPY BIRD 2D (Windows Desktop)
-
+            
+            Game Flappy Bird 2D siap dimainkan di PC/Laptop Windows!
+            
             ### 💻 Cara Install & Mainkan:
-            1. Download file `FlappyBird-Windows.zip`.
-            2. Extract file ZIP ke folder di komputer/laptop Anda.
-            3. Jalankan `FlappyBird.exe` untuk mulai bermain! 🐦
+            1. Download file **`FlappyBird-Windows.zip`** di bawah (bagian Assets).
+            2. Extract/Unzip file tersebut ke folder di komputer Anda.
+            3. Buka folder hasil extract, lalu double-click **`FlappyBird.exe`** untuk bermain! 🐦✨
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
