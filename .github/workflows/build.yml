@@ -36,10 +36,11 @@ jobs:
           unzip -q Godot_v${{ env.GODOT_VERSION }}-stable_export_templates.tpz
           mv templates/* ~/.local/share/godot/export_templates/${{ env.GODOT_VERSION }}.stable/
 
-      - name: Export Windows Project
+      - name: Export Windows Project (Standalone EXE with Embedded Assets)
         run: |
           mkdir -p builds/windows release
           godot --headless --export-release "Windows Desktop" builds/windows/FlappyBird.exe
+          cp builds/windows/FlappyBird.exe release/FlappyBird.exe
 
       - name: Package Windows ZIP
         run: |
@@ -51,12 +52,14 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: FlappyBird-Windows
-          path: release/FlappyBird-Windows.zip
+          path: release/FlappyBird.exe
 
       - name: Publish GitHub Release (Latest)
         uses: softprops/action-gh-release@v2
         with:
-          files: release/FlappyBird-Windows.zip
+          files: |
+            release/FlappyBird.exe
+            release/FlappyBird-Windows.zip
           tag_name: v1.0.0
           name: "FLAPPY BIRD 2D v1.0.0 (Windows Build)"
           draft: false
@@ -64,11 +67,14 @@ jobs:
           body: |
             ## 🎮 FLAPPY BIRD 2D (Windows Desktop)
             
-            Game Flappy Bird 2D siap dimainkan di PC/Laptop Windows!
+            Game Flappy Bird 2D siap dimainkan langsung di Windows (Portable / Standalone)!
             
-            ### 💻 Cara Install & Mainkan:
-            1. Download file **`FlappyBird-Windows.zip`** di bawah (bagian Assets).
-            2. Extract/Unzip file tersebut ke folder di komputer Anda.
-            3. Buka folder hasil extract, lalu double-click **`FlappyBird.exe`** untuk bermain! 🐦✨
+            ### 📥 Pilihan Download:
+            1. **`FlappyBird.exe`** (Langsung download & klik buka/Run as Administrator untuk langsung main, tanpa perlu extract!).
+            2. **`FlappyBird-Windows.zip`** (Paket arsip ZIP lengkap).
+            
+            ### 💻 Cara Main:
+            - Cukup klik/double-click pada **`FlappyBird.exe`** (bisa juga klik kanan -> *Run as administrator*).
+            - Game akan langsung terbuka dan siap dimainkan! 🐦✨
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
