@@ -16,7 +16,7 @@ env:
 jobs:
   build-and-release:
     name: 💻 Build & Release Windows Desktop
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
@@ -25,64 +25,46 @@ jobs:
         with:
           lfs: true
 
-      - name: Setup Inno Setup Compiler
+      - name: Setup Innoextract & Inno Setup via Wine
         run: |
-          choco install innosetup -y
+          sudo dpkg --add-architecture i386
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends wine32 wine64 innoextract p7zip-full
+          
+          # Download official Inno Setup QuickInstall
+          curl -LO https://files.jrsoftware.org/is/6/innosetup-6.3.3.exe
+          mkdir -p ~/.inno
+          innoextract -d ~/.inno/ innosetup-6.3.3.exe
 
       - name: Setup Godot ${{ env.GODOT_VERSION }} & Export Templates
-        shell: pwsh
         run: |
-          $templateDir = "$env:APPDATA\Godot\export_templates\${{ env.GODOT_VERSION }}.stable"
-          New-Item -ItemType Directory -Force -Path $templateDir
+          mkdir -p ~/.local/share/godot/export_templates/${{ env.GODOT_VERSION }}.stable
+          curl -LO https://github.com/godotengine/godot/releases/download/${{ env.GODOT_VERSION }}-stable/Godot_v${{ env.GODOT_VERSION }}-stable_linux.x86_64.zip
+          unzip -q Godot_v${{ env.GODOT_VERSION }}-stable_linux.x86_64.zip
+          mv Godot_v${{ env.GODOT_VERSION }}-stable_linux.x86_64 /usr/local/bin/godot
           
-          # Download Godot Windows Console Binary (.console.exe is fully headless & reliable in CI)
-          curl.exe -LO https://github.com/godotengine/godot/releases/download/${{ env.GODOT_VERSION }}-stable/Godot_v${{ env.GODOT_VERSION }}-stable_win64.exe.zip
-          Expand-Archive -Path Godot_v${{ env.GODOT_VERSION }}-stable_win64.exe.zip -DestinationPath . -Force
-          Rename-Item -Path Godot_v${{ env.GODOT_VERSION }}-stable_win64_console.exe -NewName godot_console.exe
-          
-          # Download Export Templates
-          curl.exe -LO https://github.com/godotengine/godot/releases/download/${{ env.GODOT_VERSION }}-stable/Godot_v${{ env.GODOT_VERSION }}-stable_export_templates.tpz
-          Expand-Archive -Path Godot_v${{ env.GODOT_VERSION }}-stable_export_templates.tpz -DestinationPath ./temp_templates -Force
-          Copy-Item -Path ./temp_templates/templates/* -Destination $templateDir -Recurse -Force
-          
-          # Check installed templates
-          Get-ChildItem -Path $templateDir
+          curl -LO https://github.com/godotengine/godot/releases/download/${{ env.GODOT_VERSION }}-stable/Godot_v${{ env.GODOT_VERSION }}-stable_export_templates.tpz
+          unzip -q Godot_v${{ env.GODOT_VERSION }}-stable_export_templates.tpz
+          mv templates/* ~/.local/share/godot/export_templates/${{ env.GODOT_VERSION }}.stable/
 
       - name: Export Windows Standalone EXE
-        shell: pwsh
         run: |
-          New-Item -ItemType Directory -Force -Path "builds\windows", "release"
-          
-          # Export using godot_console.exe
-          .\godot_console.exe --headless --export-release "Windows Desktop" "builds\windows\FlappyBird.exe"
-          
-          # Verify file exists
-          if (Test-Path "builds\windows\FlappyBird.exe") {
-              Write-Host "Export success! Size: $((Get-Item 'builds\windows\FlappyBird.exe').Length) bytes"
-              Copy-Item "builds\windows\FlappyBird.exe" "release\FlappyBird.exe" -Force
-          } else {
-              Write-Error "FlappyBird.exe was not created!"
-              exit 1
-          }
+          mkdir -p builds/windows release
+          godot --headless --export-release "Windows Desktop" builds/windows/FlappyBird.exe
+          cp builds/windows/FlappyBird.exe release/FlappyBird.exe
+          ls -la builds/windows/
 
       - name: Compile Windows 11 Administrator Installer
-        shell: pwsh
         run: |
-          cd builds\windows
-          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" ..\..\installer\installer.iss
-          cd ..\..
-          
-          if (Test-Path "release\FlappyBird-Setup-v1.0.0.exe") {
-              Write-Host "Installer compiled successfully! Size: $((Get-Item 'release\FlappyBird-Setup-v1.0.0.exe').Length) bytes"
-          } else {
-              Write-Error "Installer compilation failed!"
-              exit 1
-          }
+          cd builds/windows
+          wine ~/.inno/app/ISCC.exe ../../installer/installer.iss
+          cd ../..
+          ls -la release/
 
       - name: Upload Installer Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: FlappyBird-Installer
+          name: FlappyBird-Windows-Installer
           path: release/FlappyBird-Setup-v1.0.0.exe
 
       - name: Publish GitHub Release
@@ -100,12 +82,12 @@ jobs:
             
             ### 📥 Pilihan File:
             1. **`FlappyBird-Setup-v1.0.0.exe`** *(Rekomendasi)*:
-               - **Installer Resmi Windows**: Otomatis meminta izin **Administrator**.
+               - **Installer Resmi Windows**: Otomatis meminta hak akses **Administrator**.
                - Menginstal game langsung ke dalam folder SSD (`C:\Program Files\Flappy Bird`).
                - Membuat icon shortcut otomatis di **Desktop** & **Start Menu**.
-               - Dilengkapi opsi checklist *"Launch Flappy Bird"* agar langsung terbuka saat instalasi selesai!
+               - Checklist *"Launch Flappy Bird"* agar langsung terbuka saat selesai install!
             
             2. **`FlappyBird.exe`**:
-               - Versi Portable (bisa langsung dijalankan tanpa instalasi).
+               - Versi Portable Standalone (bisa langsung dijalankan tanpa instalasi).
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
