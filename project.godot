@@ -21,6 +21,8 @@ config/icon="res://assets/icon/game_icon.png"
 
 [autoload]
 
+DataManager="*res://scripts/core/DataManager.gd"
+
 SaveManager="*res://scripts/core/SaveManager.gd"
 AudioManager="*res://scripts/core/AudioManager.gd"
 GameManager="*res://scripts/core/GameManager.gd"

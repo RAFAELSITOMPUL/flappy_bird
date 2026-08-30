@@ -1,4 +1,4 @@
-name: Build & Release Flappy Bird (Windows Desktop)
+name: Build & Release Flappy Bird (Android & Windows)
 
 on:
   push:
@@ -14,33 +14,100 @@ env:
   PROJECT_PATH: .
 
 jobs:
-  build-and-release:
-    name: 💻 Build & Release Windows Desktop
-    runs-on: windows-latest
-    permissions:
-      contents: write
+  # ====================================================================
+  # JOB 1: ANDROID APK BUILD (Independent Ubuntu Runner)
+  # ====================================================================
+  android-build:
+    name: 📱 Build Android APK
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
         with:
           lfs: true
 
-      - name: Install Inno Setup
+      - name: Setup Java JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Accept Android SDK Licenses & Setup Build Tools
+        run: |
+          yes | sdkmanager --licenses || true
+          sdkmanager --install "platform-tools" "build-tools;34.0.0" "platforms;android-34" "cmdline-tools;latest"
+
+      - name: Setup Godot ${{ env.GODOT_VERSION }} Linux & Export Templates
+        run: |
+          mkdir -p ~/.local/share/godot/export_templates/${{ env.GODOT_VERSION }}.stable
+          curl -LO https://github.com/godotengine/godot/releases/download/${{ env.GODOT_VERSION }}-stable/Godot_v${{ env.GODOT_VERSION }}-stable_linux.x86_64.zip
+          unzip -q Godot_v${{ env.GODOT_VERSION }}-stable_linux.x86_64.zip
+          mv Godot_v${{ env.GODOT_VERSION }}-stable_linux.x86_64 /usr/local/bin/godot
+          
+          curl -LO https://github.com/godotengine/godot/releases/download/${{ env.GODOT_VERSION }}-stable/Godot_v${{ env.GODOT_VERSION }}-stable_export_templates.tpz
+          unzip -q Godot_v${{ env.GODOT_VERSION }}-stable_export_templates.tpz
+          mv templates/* ~/.local/share/godot/export_templates/${{ env.GODOT_VERSION }}.stable/
+
+      - name: Generate Android Debug Keystore
+        run: |
+          mkdir -p ~/.android
+          keytool -keyalg RSA -genkeypair -alias androiddebugkey -keypass android -keystore ~/.android/debug.keystore -storepass android -dname "CN=Android Debug,O=Android,C=US" -validity 9999 -deststoretype pkcs12
+          cp ~/.android/debug.keystore ./debug.keystore
+          
+          # Inject keystore path directly into export_presets.cfg
+          sed -i 's|keystore/debug=""|keystore/debug="'"$PWD/debug.keystore"'"|g' export_presets.cfg
+          sed -i 's|keystore/debug_user=""|keystore/debug_user="androiddebugkey"|g' export_presets.cfg
+          sed -i 's|keystore/debug_password=""|keystore/debug_password="android"|g' export_presets.cfg
+
+      - name: Export Android APK
+        run: |
+          mkdir -p builds/android release
+          godot --headless --export-debug "Android" builds/android/FlappyBird.apk
+          
+          # VALIDATE APK FILE
+          if [ -s "builds/android/FlappyBird.apk" ]; then
+            echo "SUCCESS: FlappyBird.apk created successfully! Size: $(stat -c%s builds/android/FlappyBird.apk) bytes"
+            cp builds/android/FlappyBird.apk release/FlappyBird-Android.apk
+          else
+            echo "ERROR: Android export failed: FlappyBird.apk not found or empty!"
+            exit 1
+          fi
+
+      - name: Upload Android APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: FlappyBird-Android-APK
+          path: release/FlappyBird-Android.apk
+
+  # ====================================================================
+  # JOB 2: WINDOWS BUILD & INSTALLER (Independent Windows Runner)
+  # ====================================================================
+  windows-build:
+    name: 💻 Build Windows EXE & Installer
+    runs-on: windows-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Install Inno Setup Compiler
         run: |
           choco install innosetup -y --no-progress
 
-      - name: Download & Setup Godot ${{ env.GODOT_VERSION }}
+      - name: Download & Setup Godot ${{ env.GODOT_VERSION }} & Templates
         shell: pwsh
         run: |
           $templatesPath = "$env:APPDATA\Godot\export_templates\${{ env.GODOT_VERSION }}.stable"
           New-Item -ItemType Directory -Force -Path $templatesPath
           
-          # Download Godot Engine for Windows
           Write-Host "Downloading Godot Windows binary..."
           curl.exe -L -o godot_win.zip https://github.com/godotengine/godot/releases/download/${{ env.GODOT_VERSION }}-stable/Godot_v${{ env.GODOT_VERSION }}-stable_win64.exe.zip
           Expand-Archive -Path godot_win.zip -DestinationPath ./godot_bin -Force
           
-          # Download Export Templates
           Write-Host "Downloading Godot Export Templates..."
           curl.exe -L -o godot_templates.tpz https://github.com/godotengine/godot/releases/download/${{ env.GODOT_VERSION }}-stable/Godot_v${{ env.GODOT_VERSION }}-stable_export_templates.tpz
           Expand-Archive -Path godot_templates.tpz -DestinationPath ./temp_templates -Force
@@ -48,7 +115,7 @@ jobs:
           
           Write-Host "Godot and Templates setup complete!"
 
-      - name: Export Windows Standalone EXE
+      - name: Export Windows Desktop Project
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path "builds\windows", "release"
@@ -59,66 +126,123 @@ jobs:
           }
           
           Write-Host "Executing Godot Export using: $godotExe"
-          
-          # Execute Godot export directly with proper quoted string argument
           & "$godotExe" --headless --export-release "Windows Desktop" "builds\windows\FlappyBird.exe"
           
-          if ($LASTEXITCODE -ne 0) {
-              Write-Error "Godot export failed with exit code $LASTEXITCODE"
-              exit $LASTEXITCODE
-          }
-          
-          # Verify FlappyBird.exe was generated
+          # VALIDATE WINDOWS EXE
           if (Test-Path "builds\windows\FlappyBird.exe") {
-              Write-Host "FlappyBird.exe generated successfully! Size: $((Get-Item 'builds\windows\FlappyBird.exe').Length) bytes"
-              Copy-Item "builds\windows\FlappyBird.exe" "release\FlappyBird.exe" -Force
+              $exeSize = (Get-Item "builds\windows\FlappyBird.exe").Length
+              if ($exeSize -gt 1000000) {
+                  Write-Host "SUCCESS: builds\windows\FlappyBird.exe verified! Size: $exeSize bytes"
+                  Copy-Item "builds\windows\FlappyBird.exe" "release\FlappyBird.exe" -Force
+              } else {
+                  Write-Error "Windows export failed: FlappyBird.exe size too small ($exeSize bytes)!"
+                  exit 1
+              }
           } else {
-              Write-Error "FlappyBird.exe not found after export!"
+              Write-Error "Windows export failed: builds\windows\FlappyBird.exe was not found!"
               exit 1
           }
+
+      - name: Package Portable Windows ZIP
+        shell: pwsh
+        run: |
+          Compress-Archive -Path "builds\windows\*" -DestinationPath "release\FlappyBird-Windows.zip" -Force
+          Write-Host "Created release\FlappyBird-Windows.zip successfully!"
 
       - name: Compile Windows 11 Administrator Installer (Inno Setup)
         shell: pwsh
         run: |
-          cd builds\windows
-          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" ..\..\installer\installer.iss
-          cd ..\..
+          Write-Host "Verifying files before running Inno Setup..."
+          Get-ChildItem -Path "builds\windows"
           
-          if (Test-Path "release\FlappyBird-Setup-v1.0.0.exe") {
-              Write-Host "Installer built successfully! Size: $((Get-Item 'release\FlappyBird-Setup-v1.0.0.exe').Length) bytes"
+          Write-Host "Compiling installer.iss..."
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" "installer\installer.iss"
+          
+          # VALIDATE INSTALLER OUTPUT
+          if (Test-Path "release\FlappyBird-Setup.exe") {
+              $setupSize = (Get-Item "release\FlappyBird-Setup.exe").Length
+              Write-Host "SUCCESS: release\FlappyBird-Setup.exe created! Size: $setupSize bytes"
           } else {
-              Write-Error "Installer binary was not created!"
+              Write-Error "Inno Setup compilation failed: release\FlappyBird-Setup.exe was not found!"
               exit 1
           }
 
-      - name: Upload Installer Artifact
+      - name: Upload Windows Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: FlappyBird-Windows-Installer
-          path: release/FlappyBird-Setup-v1.0.0.exe
+          name: FlappyBird-Windows-Builds
+          path: |
+            release/FlappyBird-Setup.exe
+            release/FlappyBird-Windows.zip
+            release/FlappyBird.exe
+
+  # ====================================================================
+  # JOB 3: GITHUB RELEASE PUBLISHER (Runs when tag or manual trigger)
+  # ====================================================================
+  release:
+    name: 🚀 Create GitHub Release
+    needs: [android-build, windows-build]
+    if: always() && (needs.android-build.result == 'success' || needs.windows-build.result == 'success')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download Android Artifact
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: FlappyBird-Android-APK
+          path: release/
+
+      - name: Download Windows Artifacts
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: FlappyBird-Windows-Builds
+          path: release/
+
+      - name: Check Artifacts List
+        run: |
+          mkdir -p release
+          ls -la release/
 
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            release/FlappyBird-Setup-v1.0.0.exe
+            release/FlappyBird-Android.apk
+            release/FlappyBird-Setup.exe
+            release/FlappyBird-Windows.zip
             release/FlappyBird.exe
           tag_name: v1.0.0
-          name: "FLAPPY BIRD 2D v1.0.0 (Windows Installer & Standalone)"
+          name: "FLAPPY BIRD 2D v1.0.0 (Android & Windows Release)"
           draft: false
           prerelease: false
           body: |
-            ## 🎮 FLAPPY BIRD 2D (Windows 11 / 10 Installer)
+            ## 🎮 FLAPPY BIRD 2D (Official Release v1.0.0)
             
-            ### 📥 Pilihan File:
-            1. **`FlappyBird-Setup-v1.0.0.exe`** *(Rekomendasi)*:
-               - **Installer Resmi Windows**: Otomatis meminta hak akses **Administrator**.
-               - Menginstal game langsung ke dalam folder SSD (`C:\Program Files\Flappy Bird`).
-               - Membuat icon shortcut otomatis di **Desktop** & **Start Menu**.
-               - Checklist *"Launch Flappy Bird"* agar langsung terbuka saat selesai install!
-               - Dilengkapi **Uninstaller Resmi** di Windows Control Panel / Settings.
+            Game Flappy Bird 2D siap dimainkan di Android dan Windows!
             
-            2. **`FlappyBird.exe`**:
-               - Versi Portable Standalone (bisa langsung dijalankan tanpa instalasi).
+            ---
+            
+            ### 📱 Android
+            - **`FlappyBird-Android.apk`**: Download langsung dan install di HP Android Anda.
+            
+            ---
+            
+            ### 💻 Windows Desktop
+            - **`FlappyBird-Setup.exe`** *(Rekomendasi)*:
+              - Installer Resmi Windows (Hak Administrator).
+              - Otomatis terpasang di SSD: `C:\FlappyBird\`.
+              - Shortcut di Desktop & Start Menu.
+              - Uninstaller resmi di Windows Settings / Installed Apps.
+            - **`FlappyBird-Windows.zip`**: Versi Portable ZIP (Extract lalu jalankan).
+            - **`FlappyBird.exe`**: File standalone mandiri.
+            
+            ---
+            
+            ### 👨‍💻 Developer
+            - **Rafael Sitompul**
+            - WhatsApp: **+62 895-0978-9282**
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

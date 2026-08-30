@@ -1,7 +1,5 @@
 extends Node
 
-const SAVE_PATH = "user://savegame.dat"
-
 var high_score: int = 0
 var music_enabled: bool = true
 var sfx_enabled: bool = true
@@ -16,6 +14,14 @@ var display_mode: int = 0     # 0 = Fullscreen, 1 = Borderless Fullscreen, 2 = W
 var resolution_w: int = 1280
 var resolution_h: int = 720
 
+func _get_save_path() -> String:
+	var dm = Engine.get_singleton("DataManager") if Engine.has_singleton("DataManager") else null
+	if dm == null:
+		dm = get_node_or_null("/root/DataManager")
+	if dm and dm.has_method("get_savegame_path"):
+		return dm.get_savegame_path()
+	return "user://savegame.dat"
+
 func _ready() -> void:
 	if not (OS.get_name() in ["Android", "iOS", "Web"]):
 		var screen_size = DisplayServer.screen_get_size()
@@ -25,6 +31,7 @@ func _ready() -> void:
 	load_game()
 
 func save_game() -> void:
+	var save_path := _get_save_path()
 	var data: Dictionary = {
 		"high_score": high_score,
 		"music_enabled": music_enabled,
@@ -38,18 +45,19 @@ func save_game() -> void:
 		"resolution_w": resolution_w,
 		"resolution_h": resolution_h
 	}
-	var file = FileAccess.open(SAVE_PATH, FileAccess.WRITE)
+	var file = FileAccess.open(save_path, FileAccess.WRITE)
 	if file:
 		var json_string = JSON.stringify(data)
 		file.store_string(json_string)
 		file.close()
 
 func load_game() -> void:
-	if not FileAccess.file_exists(SAVE_PATH):
+	var save_path := _get_save_path()
+	if not FileAccess.file_exists(save_path):
 		apply_graphics_settings()
 		return
 	
-	var file = FileAccess.open(SAVE_PATH, FileAccess.READ)
+	var file = FileAccess.open(save_path, FileAccess.READ)
 	if file:
 		var json_string = file.get_as_text()
 		file.close()
@@ -74,14 +82,14 @@ func load_game() -> void:
 	apply_graphics_settings()
 
 func apply_graphics_settings() -> void:
-	# 1. FPS Limit
 	Engine.max_fps = fps_limit
 	
-	# 2. Graphics Quality Effect
-	if GameManager.has_method("apply_quality_effects"):
-		GameManager.apply_quality_effects(graphics_quality)
+	var gm = Engine.get_singleton("GameManager") if Engine.has_singleton("GameManager") else null
+	if gm == null:
+		gm = get_node_or_null("/root/GameManager")
+	if gm and gm.has_method("apply_quality_effects"):
+		gm.apply_quality_effects(graphics_quality)
 	
-	# 3. Apply Display & Resolution (Desktop Windows/Linux/macOS)
 	if not (OS.get_name() in ["Android", "iOS", "Web"]):
 		apply_window_display_mode()
 
@@ -97,29 +105,16 @@ func apply_window_display_mode() -> void:
 		0: # Fullscreen
 			win.borderless = false
 			win.mode = Window.MODE_FULLSCREEN
-			print("[DisplayManager] Fullscreen Mode Applied on Screen #", screen_idx)
-			
 		1: # Borderless Fullscreen
 			win.mode = Window.MODE_EXCLUSIVE_FULLSCREEN
 			win.borderless = true
-			print("[DisplayManager] Borderless Fullscreen Mode Applied on Screen #", screen_idx)
-			
 		2: # Windowed
 			win.borderless = false
 			win.mode = Window.MODE_WINDOWED
-			
 			var target_size = Vector2i(resolution_w, resolution_h)
 			win.size = target_size
-			
-			# Center window on current monitor screen
 			var centered_pos = usable_rect.position + (usable_rect.size - target_size) / 2
-			win.position = Vector2i(max(0, centered_pos.x), max(0, centered_pos.y))
-			print("[DisplayManager] Windowed Mode Applied: ", target_size, " Pos: ", win.position)
-
-	# Validation verification output
-	var actual_mode = win.mode
-	var actual_size = win.size
-	print("[DisplayManager Verification] Actual Mode: ", actual_mode, " | Actual Size: ", actual_size)
+			win.position = Vector2i(maxi(0, centered_pos.x), maxi(0, centered_pos.y))
 
 func reset_graphics_defaults() -> void:
 	graphics_quality = 2

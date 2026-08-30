@@ -13,8 +13,6 @@ signal display_settings_changed
 # ─────────────────────────────────────────────────────────────────────
 # KONSTANTA
 # ─────────────────────────────────────────────────────────────────────
-const SETTINGS_PATH := "user://settings.cfg"
-
 const STANDARD_RESOLUTIONS: Array[Vector2i] = [
 	Vector2i(1280, 720),
 	Vector2i(1280, 800),
@@ -36,14 +34,19 @@ const STANDARD_RESOLUTIONS: Array[Vector2i] = [
 # ─────────────────────────────────────────────────────────────────────
 # VARIABEL STATE
 # ─────────────────────────────────────────────────────────────────────
-## 0 = Fullscreen  |  1 = Borderless Fullscreen  |  2 = Windowed
 var display_mode: int = 0
 var resolution_w: int = 1280
 var resolution_h: int = 720
-## 30, 60, 120, 0 (unlimited)
 var fps_target: int = 60
-## 0 = LOW  |  1 = MEDIUM  |  2 = HIGH
 var graphics_quality: int = 2
+
+func _get_settings_path() -> String:
+	var dm = Engine.get_singleton("DataManager") if Engine.has_singleton("DataManager") else null
+	if dm == null:
+		dm = get_node_or_null("/root/DataManager")
+	if dm and dm.has_method("get_settings_path"):
+		return dm.get_settings_path()
+	return "user://settings.cfg"
 
 # ─────────────────────────────────────────────────────────────────────
 # READY
@@ -64,7 +67,6 @@ func _auto_detect_monitor_defaults() -> void:
 		resolution_w = min(1920, screen_size.x)
 		resolution_h = min(1080, screen_size.y)
 
-## Kembalikan daftar resolusi yang aman (tidak melebihi ukuran monitor).
 func get_available_resolutions() -> Array[Vector2i]:
 	var result: Array[Vector2i] = []
 	if OS.get_name() in ["Android", "iOS", "Web"]:
@@ -89,12 +91,10 @@ func apply_display_mode(mode_id: int) -> void:
 	display_mode = mode_id
 
 	if OS.get_name() in ["Android", "iOS", "Web"]:
-		print("[DisplaySettings] Platform mobile — display mode dilewati.")
 		return
 
 	var win: Window = get_window()
 	if not is_instance_valid(win):
-		push_warning("[DisplaySettings] get_window() tidak valid.")
 		return
 
 	var screen_idx: int = win.current_screen
@@ -104,13 +104,9 @@ func apply_display_mode(mode_id: int) -> void:
 		0: # FULLSCREEN
 			win.borderless = false
 			win.mode = Window.MODE_FULLSCREEN
-			print("[DisplaySettings] FULLSCREEN diterapkan | Screen #", screen_idx)
-
 		1: # BORDERLESS FULLSCREEN
 			win.borderless = true
 			win.mode = Window.MODE_EXCLUSIVE_FULLSCREEN
-			print("[DisplaySettings] BORDERLESS FULLSCREEN diterapkan | Screen #", screen_idx)
-
 		2: # WINDOWED
 			win.borderless = false
 			win.mode = Window.MODE_WINDOWED
@@ -118,10 +114,6 @@ func apply_display_mode(mode_id: int) -> void:
 			win.size = target_size
 			var center_pos := usable_rect.position + (usable_rect.size - target_size) / 2
 			win.position = Vector2i(maxi(0, center_pos.x), maxi(0, center_pos.y))
-			print("[DisplaySettings] WINDOWED diterapkan | Size: ", target_size, " | Pos: ", win.position)
-
-		_:
-			push_warning("[DisplaySettings] mode_id tidak dikenal: ", mode_id)
 
 # ─────────────────────────────────────────────────────────────────────
 # APPLY RESOLUTION
@@ -144,7 +136,6 @@ func apply_resolution(width: int, height: int) -> void:
 		var usable_rect: Rect2i = DisplayServer.screen_get_usable_rect(screen_idx)
 		var center_pos := usable_rect.position + (usable_rect.size - target_size) / 2
 		win.position = Vector2i(maxi(0, center_pos.x), maxi(0, center_pos.y))
-		print("[DisplaySettings] Resolusi Windowed: ", target_size)
 
 # ─────────────────────────────────────────────────────────────────────
 # APPLY FPS
@@ -152,7 +143,6 @@ func apply_resolution(width: int, height: int) -> void:
 func apply_fps(fps: int) -> void:
 	fps_target = fps
 	Engine.max_fps = fps
-	print("[DisplaySettings] Engine.max_fps = ", Engine.max_fps)
 
 # ─────────────────────────────────────────────────────────────────────
 # APPLY GRAPHICS QUALITY
@@ -160,35 +150,23 @@ func apply_fps(fps: int) -> void:
 func apply_graphics_quality(quality_id: int) -> void:
 	graphics_quality = quality_id
 
-	# MSAA 2D tidak didukung pada renderer gl_compatibility (GLES3)
-	# Cek rendering method dari ProjectSettings
 	var render_method: String = ProjectSettings.get_setting(
 		"rendering/renderer/rendering_method", "forward_plus")
 
 	if render_method == "gl_compatibility":
-		# Pada GLES3/Compatibility: quality hanya disimpan, tidak bisa ubah MSAA
-		print("[DisplaySettings] Quality set: ", quality_id,
-			" (MSAA dilewati — renderer gl_compatibility tidak support MSAA 2D)")
 		return
 
-	# Untuk renderer Forward+ / Mobile yang mendukung MSAA 2D
 	var rid: RID = get_viewport().get_viewport_rid()
 	match quality_id:
-		0: # LOW
+		0:
 			RenderingServer.viewport_set_msaa_2d(rid, RenderingServer.VIEWPORT_MSAA_DISABLED)
-			print("[DisplaySettings] Quality: LOW (MSAA OFF)")
-		1: # MEDIUM
+		1:
 			RenderingServer.viewport_set_msaa_2d(rid, RenderingServer.VIEWPORT_MSAA_2X)
-			print("[DisplaySettings] Quality: MEDIUM (MSAA 2x)")
-		2: # HIGH
+		2:
 			RenderingServer.viewport_set_msaa_2d(rid, RenderingServer.VIEWPORT_MSAA_4X)
-			print("[DisplaySettings] Quality: HIGH (MSAA 4x)")
-		_:
-			push_warning("[DisplaySettings] quality_id tidak dikenal: ", quality_id)
-
 
 # ─────────────────────────────────────────────────────────────────────
-# APPLY ALL — dipanggil tombol APPLY di UI
+# APPLY ALL
 # ─────────────────────────────────────────────────────────────────────
 func apply_all_display_settings(mode_id: int, res_w: int, res_h: int, fps: int, quality_id: int) -> void:
 	display_mode = mode_id
@@ -213,7 +191,6 @@ func apply_all_display_settings(mode_id: int, res_w: int, res_h: int, fps: int, 
 func validate_display_settings() -> Dictionary:
 	var win: Window = get_window()
 	if not is_instance_valid(win):
-		push_warning("[DisplaySettings] validate: window tidak valid.")
 		return {}
 
 	var data: Dictionary = {
@@ -223,28 +200,25 @@ func validate_display_settings() -> Dictionary:
 		"borderless": win.borderless,
 		"max_fps":    Engine.max_fps,
 	}
-	print("[DisplaySettings] VALIDASI: mode=", win.mode,
-		" size=", win.size, " borderless=", win.borderless,
-		" max_fps=", Engine.max_fps)
 	return data
 
 # ─────────────────────────────────────────────────────────────────────
 # SAVE
 # ─────────────────────────────────────────────────────────────────────
 func save_settings() -> void:
+	var path := _get_settings_path()
 	var config := ConfigFile.new()
 	config.set_value("graphics", "display_mode",     display_mode)
 	config.set_value("graphics", "resolution_w",     resolution_w)
 	config.set_value("graphics", "resolution_h",     resolution_h)
 	config.set_value("graphics", "fps_target",       fps_target)
 	config.set_value("graphics", "graphics_quality", graphics_quality)
-	var err: int = config.save(SETTINGS_PATH)
+	var err: int = config.save(path)
 	if err != OK:
 		push_warning("[DisplaySettings] Gagal menyimpan: ", err)
 	else:
-		print("[DisplaySettings] Settings disimpan ke ", SETTINGS_PATH)
+		print("[DisplaySettings] Settings disimpan ke ", path)
 
-	# Sync ke SaveManager
 	SaveManager.display_mode     = display_mode
 	SaveManager.resolution_w     = resolution_w
 	SaveManager.resolution_h     = resolution_h
@@ -256,22 +230,22 @@ func save_settings() -> void:
 # LOAD
 # ─────────────────────────────────────────────────────────────────────
 func load_settings() -> void:
+	var path := _get_settings_path()
 	var config := ConfigFile.new()
-	var err: int = config.load(SETTINGS_PATH)
+	var err: int = config.load(path)
 	if err == OK:
 		display_mode     = config.get_value("graphics", "display_mode",     display_mode)
 		resolution_w     = config.get_value("graphics", "resolution_w",     resolution_w)
 		resolution_h     = config.get_value("graphics", "resolution_h",     resolution_h)
 		fps_target       = config.get_value("graphics", "fps_target",       fps_target)
 		graphics_quality = config.get_value("graphics", "graphics_quality", graphics_quality)
-		print("[DisplaySettings] Settings dimuat dari ", SETTINGS_PATH)
+		print("[DisplaySettings] Settings dimuat dari ", path)
 	else:
 		display_mode     = SaveManager.display_mode
 		resolution_w     = SaveManager.resolution_w
 		resolution_h     = SaveManager.resolution_h
 		fps_target       = SaveManager.fps_limit
 		graphics_quality = SaveManager.graphics_quality
-		print("[DisplaySettings] Gunakan default (file belum ada).")
 
 	apply_all_display_settings(display_mode, resolution_w, resolution_h, fps_target, graphics_quality)
 
@@ -284,4 +258,3 @@ func reset_to_defaults() -> void:
 	fps_target       = 60
 	_auto_detect_monitor_defaults()
 	apply_all_display_settings(display_mode, resolution_w, resolution_h, fps_target, graphics_quality)
-	print("[DisplaySettings] Reset ke default selesai.")

@@ -1,5 +1,5 @@
 ; Inno Setup Script for Flappy Bird 2D (Windows 11 / 10 Installer)
-; Automatic SSD Folder Creation & Clean Uninstaller
+; Automatic SSD Installation to C:\FlappyBird and Clean Uninstaller
 
 #define MyAppName "Flappy Bird"
 #define MyAppVersion "1.0.0"
@@ -12,12 +12,12 @@ AppId={#MyAppId}
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
 AppPublisher={#MyAppPublisher}
-; Otomatis membuat folder di SSD: C:\Program Files\Flappy Bird (atau drive SSD tempat Windows terpasang)
-DefaultDirName={autopf}\{#MyAppName}
+; Folder instalasi default: C:\FlappyBird (atau folder pilihan user)
+DefaultDirName=C:\{#MyAppName}
 DefaultGroupName={#MyAppName}
 AllowNoIcons=yes
 OutputDir=..\release
-OutputBaseFilename=FlappyBird-Setup-v1.0.0
+OutputBaseFilename=FlappyBird-Setup
 SetupIconFile=..\assets\icon\game_icon.ico
 UninstallDisplayIcon={app}\{#MyAppExeName}
 UninstallDisplayName={#MyAppName} 2D Game
@@ -39,10 +39,11 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: checkedonce
+Name: "cleandata"; Description: "Hapus data save & konfigurasi lokal (C:\FlappyBird\Data) saat uninstall"; GroupDescription: "Pengaturan Data:"; Flags: unchecked
 
 [Files]
-; Salin FlappyBird.exe ke dalam folder SSD {app}
-Source: "FlappyBird.exe"; DestDir: "{app}"; Flags: ignoreversion
+; Mengambil seluruh file build Windows dari folder builds\windows
+Source: "..\builds\windows\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
 ; Shortcut Start Menu
@@ -53,10 +54,12 @@ Name: "{group}\Uninstall {#MyAppName}"; Filename: "{uninstallexe}"
 Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon; IconFilename: "{app}\{#MyAppExeName}"
 
 [Run]
-; Opsi buka game setelah instalasi selesai
+; Opsi jalankan game langsung setelah instalasi
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
 
 [UninstallDelete]
-; Hapus seluruh folder game di SSD dan file konfigurasi saat di-uninstall
+; Hapus file instalasi di C:\FlappyBird
 Type: files; Name: "{app}\*.*"
+Type: filesandordirs; Name: "{app}\Data\*"
+Type: dirifempty; Name: "{app}\Data"
 Type: dirifempty; Name: "{app}"
