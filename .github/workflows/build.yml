@@ -32,24 +32,38 @@ jobs:
       - name: Setup Godot ${{ env.GODOT_VERSION }} & Export Templates
         shell: pwsh
         run: |
-          New-Item -ItemType Directory -Force -Path "$env:APPDATA\Godot\export_templates\${{ env.GODOT_VERSION }}.stable"
+          $templateDir = "$env:APPDATA\Godot\export_templates\${{ env.GODOT_VERSION }}.stable"
+          New-Item -ItemType Directory -Force -Path $templateDir
           
-          # Download Godot Windows Binary
+          # Download Godot Windows Console Binary (.console.exe is fully headless & reliable in CI)
           curl.exe -LO https://github.com/godotengine/godot/releases/download/${{ env.GODOT_VERSION }}-stable/Godot_v${{ env.GODOT_VERSION }}-stable_win64.exe.zip
           Expand-Archive -Path Godot_v${{ env.GODOT_VERSION }}-stable_win64.exe.zip -DestinationPath . -Force
-          Rename-Item -Path Godot_v${{ env.GODOT_VERSION }}-stable_win64.exe -NewName godot.exe
+          Rename-Item -Path Godot_v${{ env.GODOT_VERSION }}-stable_win64_console.exe -NewName godot_console.exe
           
           # Download Export Templates
           curl.exe -LO https://github.com/godotengine/godot/releases/download/${{ env.GODOT_VERSION }}-stable/Godot_v${{ env.GODOT_VERSION }}-stable_export_templates.tpz
           Expand-Archive -Path Godot_v${{ env.GODOT_VERSION }}-stable_export_templates.tpz -DestinationPath ./temp_templates -Force
-          Copy-Item -Path ./temp_templates/templates/* -Destination "$env:APPDATA\Godot\export_templates\${{ env.GODOT_VERSION }}.stable" -Recurse -Force
+          Copy-Item -Path ./temp_templates/templates/* -Destination $templateDir -Recurse -Force
+          
+          # Check installed templates
+          Get-ChildItem -Path $templateDir
 
       - name: Export Windows Standalone EXE
         shell: pwsh
         run: |
-          New-Item -ItemType Directory -Force -Path "release", "builds\windows"
-          .\godot.exe --headless --export-release "Windows Desktop" builds\windows\FlappyBird.exe
-          Copy-Item builds\windows\FlappyBird.exe release\FlappyBird.exe -Force
+          New-Item -ItemType Directory -Force -Path "builds\windows", "release"
+          
+          # Export using godot_console.exe
+          .\godot_console.exe --headless --export-release "Windows Desktop" "builds\windows\FlappyBird.exe"
+          
+          # Verify file exists
+          if (Test-Path "builds\windows\FlappyBird.exe") {
+              Write-Host "Export success! Size: $((Get-Item 'builds\windows\FlappyBird.exe').Length) bytes"
+              Copy-Item "builds\windows\FlappyBird.exe" "release\FlappyBird.exe" -Force
+          } else {
+              Write-Error "FlappyBird.exe was not created!"
+              exit 1
+          }
 
       - name: Compile Windows 11 Administrator Installer
         shell: pwsh
@@ -57,6 +71,13 @@ jobs:
           cd builds\windows
           & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" ..\..\installer\installer.iss
           cd ..\..
+          
+          if (Test-Path "release\FlappyBird-Setup-v1.0.0.exe") {
+              Write-Host "Installer compiled successfully! Size: $((Get-Item 'release\FlappyBird-Setup-v1.0.0.exe').Length) bytes"
+          } else {
+              Write-Error "Installer compilation failed!"
+              exit 1
+          }
 
       - name: Upload Installer Artifact
         uses: actions/upload-artifact@v4
@@ -79,7 +100,7 @@ jobs:
             
             ### 📥 Pilihan File:
             1. **`FlappyBird-Setup-v1.0.0.exe`** *(Rekomendasi)*:
-               - **Installer Resmi Windows**: Otomatis meminta hak **Administrator**.
+               - **Installer Resmi Windows**: Otomatis meminta izin **Administrator**.
                - Menginstal game langsung ke dalam folder SSD (`C:\Program Files\Flappy Bird`).
                - Membuat icon shortcut otomatis di **Desktop** & **Start Menu**.
                - Dilengkapi opsi checklist *"Launch Flappy Bird"* agar langsung terbuka saat instalasi selesai!
