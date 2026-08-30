@@ -1,0 +1,19 @@
+# Godot 4.x gitignore
+
+# Godot engine cache and import data
+.godot/
+*.translation
+
+# System / OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Exported builds & binaries
+/*.apk
+/*.aab
+/*.exe
+/*.pck
+/*.zip
+/exports/
+/builds/

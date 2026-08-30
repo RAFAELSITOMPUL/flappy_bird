@@ -1,0 +1,122 @@
+name: Build & Release Flappy Bird
+
+on:
+  push:
+    branches:
+      - main
+      - master
+    tags:
+      - 'v*'
+  pull_request:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+
+env:
+  GODOT_VERSION: 4.3
+  PROJECT_PATH: .
+
+jobs:
+  build-windows:
+    name: 💻 Build Windows Desktop
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Godot & Export Templates
+        uses: abarreno/godot-export@v3.0.0
+        with:
+          godot_version: ${{ env.GODOT_VERSION }}
+          godot_channel: stable
+          preset: "Windows Desktop"
+          project_path: ${{ env.PROJECT_PATH }}
+
+      - name: Create Windows ZIP Archive
+        run: |
+          mkdir -p release
+          cd builds/windows/ || cd build/windows/ || true
+          zip -r ../../release/FlappyBird-Windows.zip .
+          cd ../..
+
+      - name: Upload Windows Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: FlappyBird-Windows
+          path: release/FlappyBird-Windows.zip
+
+  build-android:
+    name: 📱 Build Android APK
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Java JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Setup Godot & Export Android APK
+        uses: abarreno/godot-export@v3.0.0
+        with:
+          godot_version: ${{ env.GODOT_VERSION }}
+          godot_channel: stable
+          preset: "Android"
+          project_path: ${{ env.PROJECT_PATH }}
+
+      - name: Prepare APK Release Artifact
+        run: |
+          mkdir -p release
+          find . -name "*.apk" -exec cp {} release/FlappyBird-Android.apk \;
+
+      - name: Upload Android Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: FlappyBird-Android
+          path: release/FlappyBird-Android.apk
+
+  release:
+    name: 🚀 Create GitHub Release
+    needs: [build-windows, build-android]
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download Windows Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: FlappyBird-Windows
+          path: release/
+
+      - name: Download Android Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: FlappyBird-Android
+          path: release/
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            release/FlappyBird-Windows.zip
+            release/FlappyBird-Android.apk
+          name: FLAPPY BIRD ${{ github.ref_name }}
+          draft: false
+          prerelease: false
+          body: |
+            ## 🎮 FLAPPY BIRD 2D (Godot Engine 4.3)
+
+            ### 📱 Android Smartphone
+            - Download `FlappyBird-Android.apk`
+            - Install dan mainkan di HP Android!
+
+            ### 💻 Windows Desktop / Laptop
+            - Download `FlappyBird-Windows.zip`
+            - Extract ZIP lalu jalankan `FlappyBird.exe`
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

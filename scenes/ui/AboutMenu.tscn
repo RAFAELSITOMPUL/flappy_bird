@@ -1,0 +1,372 @@
+﻿[gd_scene load_steps=10 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/AboutMenu.gd" id="1_about_script"]
+[ext_resource type="Texture2D" path="res://assets/textures/button_normal.png" id="2_btn_norm"]
+[ext_resource type="Texture2D" path="res://assets/textures/button_hover.png" id="3_btn_hov"]
+[ext_resource type="Texture2D" path="res://assets/textures/button_pressed.png" id="4_btn_press"]
+[ext_resource type="Texture2D" path="res://assets/textures/icons/whatsapp_icon.png" id="5_wa_icon"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_wa_norm"]
+bg_color = Color(0.08, 0.35, 0.18, 0.9)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_wa_hov"]
+bg_color = Color(0.12, 0.55, 0.28, 1.0)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_wa_press"]
+bg_color = Color(0.06, 0.25, 0.12, 1.0)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_norm"]
+texture = ExtResource("2_btn_norm")
+texture_margin_left = 12.0
+texture_margin_top = 12.0
+texture_margin_right = 12.0
+texture_margin_bottom = 12.0
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_hov"]
+texture = ExtResource("3_btn_hov")
+texture_margin_left = 12.0
+texture_margin_top = 12.0
+texture_margin_right = 12.0
+texture_margin_bottom = 12.0
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_press"]
+texture = ExtResource("4_btn_press")
+texture_margin_left = 12.0
+texture_margin_top = 12.0
+texture_margin_right = 12.0
+texture_margin_bottom = 12.0
+
+[node name="AboutMenu" type="Control"]
+process_mode = 3
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_about_script")
+
+[node name="BG" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.04, 0.04, 0.12, 0.96)
+
+[node name="Root" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 24
+theme_override_constants/margin_top = 20
+theme_override_constants/margin_right = 24
+theme_override_constants/margin_bottom = 20
+
+[node name="Outer" type="VBoxContainer" parent="Root"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Title" type="Label" parent="Root/Outer"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.85, 0.1, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 6
+theme_override_font_sizes/font_size = 26
+text = "ABOUT FLAPPY BIRD"
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="Sep1" type="HSeparator" parent="Root/Outer"]
+layout_mode = 2
+theme_override_colors/separator_color = Color(1, 0.85, 0.1, 0.6)
+
+[node name="Scroll" type="ScrollContainer" parent="Root/Outer"]
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="Content" type="VBoxContainer" parent="Root/Outer/Scroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 16
+
+[node name="WelcomeLabel" type="Label" parent="Root/Outer/Scroll/Content"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.95, 0.95, 0.95, 1)
+theme_override_font_sizes/font_size = 15
+text = "Selamat datang di Flappy Bird!
+
+Flappy Bird adalah game 2D arcade sederhana dengan gameplay yang mudah dipahami tetapi membutuhkan ketepatan dan konsentrasi tinggi.
+
+Kendalikan burung dengan melakukan tap pada layar atau menekan tombol yang tersedia untuk membuat burung terbang dan melewati celah di antara pipa.
+
+Semakin banyak pipa yang berhasil dilewati, semakin tinggi score yang akan kamu dapatkan. Cobalah mendapatkan score setinggi mungkin dan kalahkan High Score milikmu sendiri!"
+autowrap_mode = 2
+
+[node name="H1GameInfo" type="Label" parent="Root/Outer/Scroll/Content"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.85, 0.1, 1)
+theme_override_constants/outline_size = 3
+theme_override_font_sizes/font_size = 19
+text = "INFORMASI GAME"
+autowrap_mode = 2
+
+[node name="GameInfoLabel" type="Label" parent="Root/Outer/Scroll/Content"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.9, 0.9, 1)
+theme_override_font_sizes/font_size = 14
+text = "Nama Game  :  Flappy Bird
+Genre        :  2D Arcade / Casual
+Engine       :  Godot Engine 4.7
+Platform     :  Windows, Android
+Kontrol      :  Keyboard, Mouse, Touch Screen
+Mode         :  Single Player
+Versi        :  1.0.0"
+autowrap_mode = 2
+
+[node name="H1Developer" type="Label" parent="Root/Outer/Scroll/Content"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.85, 0.1, 1)
+theme_override_constants/outline_size = 3
+theme_override_font_sizes/font_size = 19
+text = "DEVELOPER"
+autowrap_mode = 2
+
+[node name="DeveloperNameLabel" type="Label" parent="Root/Outer/Scroll/Content"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.2, 0.9, 1.0, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 18
+text = "Rafael Sitompul"
+autowrap_mode = 2
+
+[node name="DeveloperRoleLabel" type="Label" parent="Root/Outer/Scroll/Content"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.9, 0.9, 1)
+theme_override_font_sizes/font_size = 14
+text = "Game Developer
+Indonesia
+
+Developed by: Rafael Sitompul"
+autowrap_mode = 2
+
+[node name="H1Contact" type="Label" parent="Root/Outer/Scroll/Content"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.85, 0.1, 1)
+theme_override_constants/outline_size = 3
+theme_override_font_sizes/font_size = 19
+text = "CONTACT DEVELOPER"
+autowrap_mode = 2
+
+[node name="WhatsAppButton" type="Button" parent="Root/Outer/Scroll/Content"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 52)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_styles/normal = SubResource("StyleBoxFlat_wa_norm")
+theme_override_styles/hover = SubResource("StyleBoxFlat_wa_hov")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_wa_press")
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_hover_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 17
+text = "  +62 895-0978-9282"
+icon = ExtResource("5_wa_icon")
+alignment = 1
+expand_icon = true
+
+[node name="H1HowToPlay" type="Label" parent="Root/Outer/Scroll/Content"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.85, 0.1, 1)
+theme_override_constants/outline_size = 3
+theme_override_font_sizes/font_size = 19
+text = "CARA BERMAIN"
+autowrap_mode = 2
+
+[node name="HowToPlayLabel" type="Label" parent="Root/Outer/Scroll/Content"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.9, 0.9, 1)
+theme_override_font_sizes/font_size = 14
+text = "WINDOWS
+  SPACE / Klik Kiri Mouse  ->  Flap (burung naik)
+  Hindari pipa atas dan bawah
+  Jangan menyentuh tanah
+  Lewati pipa untuk mendapatkan score
+  ESC  ->  Pause game
+
+ANDROID
+  Tap layar  ->  Flap (burung naik)
+  Atur waktu tap agar burung melewati celah pipa
+  Hindari pipa bagian atas dan bawah
+  Jangan menyentuh tanah"
+autowrap_mode = 2
+
+[node name="H1Controls" type="Label" parent="Root/Outer/Scroll/Content"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.85, 0.1, 1)
+theme_override_constants/outline_size = 3
+theme_override_font_sizes/font_size = 19
+text = "KONTROL"
+autowrap_mode = 2
+
+[node name="ControlsLabel" type="Label" parent="Root/Outer/Scroll/Content"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.9, 0.9, 1)
+theme_override_font_sizes/font_size = 14
+text = "WINDOWS
+  SPACE            ->  Flap
+  Klik Kiri Mouse  ->  Flap
+  ESC              ->  Pause / Resume
+
+ANDROID
+  Tap Layar        ->  Flap
+  Tombol Back      ->  Kembali ke menu"
+autowrap_mode = 2
+
+[node name="H1Features" type="Label" parent="Root/Outer/Scroll/Content"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.85, 0.1, 1)
+theme_override_constants/outline_size = 3
+theme_override_font_sizes/font_size = 19
+text = "FITUR GAME"
+autowrap_mode = 2
+
+[node name="FeaturesLabel" type="Label" parent="Root/Outer/Scroll/Content"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.9, 0.9, 1)
+theme_override_font_sizes/font_size = 14
+text = "- Gameplay arcade 2D
+- Sistem score real-time
+- High Score tersimpan
+- Game Over dan Restart
+- Pause Game
+- Main Menu
+- Settings: Audio dan Graphics
+- Fullscreen / Borderless Fullscreen / Windowed
+- Resolution Settings (Windows)
+- FPS Target (30 / 60 / 120 / Unlimited)
+- Graphics Quality (LOW / MEDIUM / HIGH)
+- Background Music dan Sound Effects
+- Kontrol Touch (Android)
+- Kontrol Keyboard dan Mouse (Windows)
+- Save dan Load Settings otomatis
+- UI responsif untuk berbagai resolusi
+- Dukungan Windows dan Android"
+autowrap_mode = 2
+
+[node name="H1Audio" type="Label" parent="Root/Outer/Scroll/Content"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.85, 0.1, 1)
+theme_override_constants/outline_size = 3
+theme_override_font_sizes/font_size = 19
+text = "AUDIO"
+autowrap_mode = 2
+
+[node name="AudioLabel" type="Label" parent="Root/Outer/Scroll/Content"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.9, 0.9, 1)
+theme_override_font_sizes/font_size = 14
+text = "Game dilengkapi dengan Background Music dan Sound Effects.
+
+Background Music memberikan suasana selama bermain di menu maupun dalam game.
+
+Sound Effects memberikan feedback audio saat pemain melakukan flap, mendapatkan score, menekan tombol, dan saat Game Over.
+
+Volume musik dan SFX dapat diatur secara terpisah melalui menu Settings."
+autowrap_mode = 2
+
+[node name="H1Graphics" type="Label" parent="Root/Outer/Scroll/Content"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.85, 0.1, 1)
+theme_override_constants/outline_size = 3
+theme_override_font_sizes/font_size = 19
+text = "GRAFIS"
+autowrap_mode = 2
+
+[node name="GraphicsLabel" type="Label" parent="Root/Outer/Scroll/Content"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.9, 0.9, 1)
+theme_override_font_sizes/font_size = 14
+text = "Game menggunakan visual 2D yang ringan dan responsif di berbagai perangkat.
+
+Pada Windows tersedia pengaturan grafis:
+  - Graphics Quality (LOW / MEDIUM / HIGH)
+  - Resolution (sesuai monitor yang terdeteksi)
+  - Display Mode (Fullscreen / Borderless / Windowed)
+  - FPS Target
+
+Semua pengaturan diterapkan secara nyata via GDScript Godot 4.7."
+autowrap_mode = 2
+
+[node name="H1Version" type="Label" parent="Root/Outer/Scroll/Content"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.85, 0.1, 1)
+theme_override_constants/outline_size = 3
+theme_override_font_sizes/font_size = 19
+text = "VERSI"
+autowrap_mode = 2
+
+[node name="VersionLabel" type="Label" parent="Root/Outer/Scroll/Content"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.9, 0.9, 1)
+theme_override_font_sizes/font_size = 14
+text = "Flappy Bird  -  Version 1.0.0
+Dibangun dengan Godot Engine 4.7"
+autowrap_mode = 2
+
+[node name="H1Credits" type="Label" parent="Root/Outer/Scroll/Content"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.85, 0.1, 1)
+theme_override_constants/outline_size = 3
+theme_override_font_sizes/font_size = 19
+text = "CREDITS"
+autowrap_mode = 2
+
+[node name="CreditsLabel" type="Label" parent="Root/Outer/Scroll/Content"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.9, 0.9, 1)
+theme_override_font_sizes/font_size = 14
+text = "Project   :  Flappy Bird
+Developer :  Rafael Sitompul
+Engine    :  Godot Engine 4.7
+Language  :  GDScript
+Platform  :  Windows / Android
+
+Semua aset visual, audio, dan font yang digunakan dalam game ini sesuai dengan ketentuan lisensinya masing-masing."
+autowrap_mode = 2
+
+[node name="BottomSpacer" type="Control" parent="Root/Outer/Scroll/Content"]
+custom_minimum_size = Vector2(0, 10)
+layout_mode = 2
+
+[node name="Sep2" type="HSeparator" parent="Root/Outer"]
+layout_mode = 2
+theme_override_colors/separator_color = Color(1, 0.85, 0.1, 0.6)
+
+[node name="BackButton" type="Button" parent="Root/Outer"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(200, 55)
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_styles/normal = SubResource("StyleBoxTexture_norm")
+theme_override_styles/hover = SubResource("StyleBoxTexture_hov")
+theme_override_styles/pressed = SubResource("StyleBoxTexture_press")
+theme_override_font_sizes/font_size = 22
+text = "BACK"

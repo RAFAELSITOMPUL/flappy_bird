@@ -1,0 +1,279 @@
+[gd_scene load_steps=12 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/Settings.gd" id="1_settings_script"]
+[ext_resource type="Texture2D" path="res://assets/textures/panel.png" id="2_panel_tex"]
+[ext_resource type="Texture2D" path="res://assets/textures/icons/music_on.png" id="3_music_on"]
+[ext_resource type="Texture2D" path="res://assets/textures/icons/sfx_on.png" id="4_sfx_on"]
+[ext_resource type="Texture2D" path="res://assets/textures/button_normal.png" id="5_btn_norm"]
+[ext_resource type="Texture2D" path="res://assets/textures/button_hover.png" id="6_btn_hov"]
+[ext_resource type="Texture2D" path="res://assets/textures/button_pressed.png" id="7_btn_press"]
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_panel"]
+texture = ExtResource("2_panel_tex")
+texture_margin_left = 16.0
+texture_margin_top = 16.0
+texture_margin_right = 16.0
+texture_margin_bottom = 16.0
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_norm"]
+texture = ExtResource("5_btn_norm")
+texture_margin_left = 8.0
+texture_margin_top = 8.0
+texture_margin_right = 8.0
+texture_margin_bottom = 8.0
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_hov"]
+texture = ExtResource("6_btn_hov")
+texture_margin_left = 8.0
+texture_margin_top = 8.0
+texture_margin_right = 8.0
+texture_margin_bottom = 8.0
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_press"]
+texture = ExtResource("7_btn_press")
+texture_margin_left = 8.0
+texture_margin_top = 8.0
+texture_margin_right = 8.0
+texture_margin_bottom = 8.0
+
+[node name="Settings" type="Control"]
+process_mode = 3
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_settings_script")
+
+[node name="CenterContainer" type="CenterContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="PanelContainer" type="PanelContainer" parent="CenterContainer"]
+custom_minimum_size = Vector2(340, 0)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxTexture_panel")
+
+[node name="MarginContainer" type="MarginContainer" parent="CenterContainer/PanelContainer"]
+layout_mode = 2
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 16
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 16
+
+[node name="VBoxContainer" type="VBoxContainer" parent="CenterContainer/PanelContainer/MarginContainer"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="TitleLabel" type="Label" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.2, 0.2, 0.2, 1)
+theme_override_colors/font_outline_color = Color(1, 1, 1, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 26
+text = "SETTINGS"
+horizontal_alignment = 1
+
+[node name="HBoxTabs" type="HBoxContainer" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="TabAudioButton" type="Button" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/HBoxTabs"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 40)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_styles/normal = SubResource("StyleBoxTexture_norm")
+theme_override_styles/hover = SubResource("StyleBoxTexture_hov")
+theme_override_styles/pressed = SubResource("StyleBoxTexture_press")
+theme_override_font_sizes/font_size = 15
+text = "AUDIO"
+
+[node name="TabGraphicsButton" type="Button" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/HBoxTabs"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 40)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_styles/normal = SubResource("StyleBoxTexture_norm")
+theme_override_styles/hover = SubResource("StyleBoxTexture_hov")
+theme_override_styles/pressed = SubResource("StyleBoxTexture_press")
+theme_override_font_sizes/font_size = 15
+text = "GRAPHICS"
+
+[node name="AudioPanel" type="VBoxContainer" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="HBoxMusic" type="HBoxContainer" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/AudioPanel"]
+layout_mode = 2
+
+[node name="MusicLabel" type="Label" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/AudioPanel/HBoxMusic"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.2, 0.2, 0.2, 1)
+theme_override_font_sizes/font_size = 15
+text = "Music"
+
+[node name="MusicIconButton" type="TextureButton" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/AudioPanel/HBoxMusic"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(36, 36)
+layout_mode = 2
+texture_normal = ExtResource("3_music_on")
+ignore_texture_size = true
+stretch_mode = 5
+
+[node name="MusicCheck" type="CheckButton" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/AudioPanel/HBoxMusic"]
+unique_name_in_owner = true
+layout_mode = 2
+button_pressed = true
+
+[node name="MusicSlider" type="HSlider" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/AudioPanel"]
+unique_name_in_owner = true
+layout_mode = 2
+max_value = 1.0
+step = 0.05
+value = 1.0
+
+[node name="HBoxSFX" type="HBoxContainer" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/AudioPanel"]
+layout_mode = 2
+
+[node name="SFXLabel" type="Label" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/AudioPanel/HBoxSFX"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.2, 0.2, 0.2, 1)
+theme_override_font_sizes/font_size = 15
+text = "Sound Effects"
+
+[node name="SFXIconButton" type="TextureButton" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/AudioPanel/HBoxSFX"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(36, 36)
+layout_mode = 2
+texture_normal = ExtResource("4_sfx_on")
+ignore_texture_size = true
+stretch_mode = 5
+
+[node name="SFXCheck" type="CheckButton" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/AudioPanel/HBoxSFX"]
+unique_name_in_owner = true
+layout_mode = 2
+button_pressed = true
+
+[node name="SFXSlider" type="HSlider" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/AudioPanel"]
+unique_name_in_owner = true
+layout_mode = 2
+max_value = 1.0
+step = 0.05
+value = 1.0
+
+[node name="GraphicsPanel" type="VBoxContainer" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="HBoxQuality" type="HBoxContainer" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/GraphicsPanel"]
+layout_mode = 2
+
+[node name="QualityLabel" type="Label" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/GraphicsPanel/HBoxQuality"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.2, 0.2, 0.2, 1)
+theme_override_font_sizes/font_size = 14
+text = "Quality"
+
+[node name="QualityOption" type="OptionButton" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/GraphicsPanel/HBoxQuality"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(150, 32)
+layout_mode = 2
+
+[node name="ContainerRes" type="HBoxContainer" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/GraphicsPanel"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="ResLabel" type="Label" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/GraphicsPanel/ContainerRes"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.2, 0.2, 0.2, 1)
+theme_override_font_sizes/font_size = 14
+text = "Resolution"
+
+[node name="ResolutionOption" type="OptionButton" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/GraphicsPanel/ContainerRes"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(150, 32)
+layout_mode = 2
+
+[node name="ContainerMode" type="HBoxContainer" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/GraphicsPanel"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="ModeLabel" type="Label" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/GraphicsPanel/ContainerMode"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.2, 0.2, 0.2, 1)
+theme_override_font_sizes/font_size = 14
+text = "Display Mode"
+
+[node name="DisplayModeOption" type="OptionButton" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/GraphicsPanel/ContainerMode"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(150, 32)
+layout_mode = 2
+
+[node name="HBoxFPS" type="HBoxContainer" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/GraphicsPanel"]
+layout_mode = 2
+
+[node name="FPSLabel" type="Label" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/GraphicsPanel/HBoxFPS"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.2, 0.2, 0.2, 1)
+theme_override_font_sizes/font_size = 14
+text = "FPS Target"
+
+[node name="FPSOption" type="OptionButton" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/GraphicsPanel/HBoxFPS"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(150, 32)
+layout_mode = 2
+
+[node name="HBoxActions" type="HBoxContainer" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/GraphicsPanel"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="BtnApply" type="Button" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/GraphicsPanel/HBoxActions"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 36)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_styles/normal = SubResource("StyleBoxTexture_norm")
+theme_override_styles/hover = SubResource("StyleBoxTexture_hov")
+theme_override_styles/pressed = SubResource("StyleBoxTexture_press")
+theme_override_font_sizes/font_size = 14
+text = "APPLY"
+
+[node name="BtnReset" type="Button" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/GraphicsPanel/HBoxActions"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 36)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_styles/normal = SubResource("StyleBoxTexture_norm")
+theme_override_styles/hover = SubResource("StyleBoxTexture_hov")
+theme_override_styles/pressed = SubResource("StyleBoxTexture_press")
+theme_override_font_sizes/font_size = 14
+text = "RESET"
+
+[node name="Spacer" type="Control" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer"]
+custom_minimum_size = Vector2(0, 6)
+layout_mode = 2
+
+[node name="BackButton" type="Button" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+theme_override_styles/normal = SubResource("StyleBoxTexture_norm")
+theme_override_styles/hover = SubResource("StyleBoxTexture_hov")
+theme_override_styles/pressed = SubResource("StyleBoxTexture_press")
+theme_override_font_sizes/font_size = 18
+text = "BACK"

@@ -1,0 +1,45 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://scripts/obstacles/PipePair.gd" id="1_pipe_script"]
+[ext_resource type="Texture2D" path="res://assets/textures/pipe.png" id="2_pipe_tex"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_pipe"]
+size = Vector2(48, 400)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_score"]
+size = Vector2(16, 140)
+
+[node name="PipePair" type="Node2D"]
+script = ExtResource("1_pipe_script")
+
+[node name="TopPipe" type="StaticBody2D" parent="."]
+collision_layer = 2
+collision_mask = 1
+
+[node name="Sprite2D" type="Sprite2D" parent="TopPipe"]
+position = Vector2(0, -200)
+texture = ExtResource("2_pipe_tex")
+flip_v = true
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="TopPipe"]
+position = Vector2(0, -200)
+shape = SubResource("RectangleShape2D_pipe")
+
+[node name="BottomPipe" type="StaticBody2D" parent="."]
+collision_layer = 2
+collision_mask = 1
+
+[node name="Sprite2D" type="Sprite2D" parent="BottomPipe"]
+position = Vector2(0, 200)
+texture = ExtResource("2_pipe_tex")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="BottomPipe"]
+position = Vector2(0, 200)
+shape = SubResource("RectangleShape2D_pipe")
+
+[node name="ScoreArea" type="Area2D" parent="."]
+collision_layer = 4
+collision_mask = 1
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="ScoreArea"]
+shape = SubResource("RectangleShape2D_score")

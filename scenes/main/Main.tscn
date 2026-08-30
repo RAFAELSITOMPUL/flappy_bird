@@ -1,0 +1,68 @@
+[gd_scene format=3 uid="uid://dj7pxb324oxkk"]
+
+[ext_resource type="Script" uid="uid://ntp7j3dhouan" path="res://scripts/core/Main.gd" id="1_main_script"]
+[ext_resource type="Script" uid="uid://co72push4r6g8" path="res://scripts/gameplay/ParallaxBackground.gd" id="2_parallax_script"]
+[ext_resource type="Texture2D" uid="uid://wbnipulvng3b" path="res://assets/textures/background.png" id="3_bg_tex"]
+[ext_resource type="Script" uid="uid://b14kj24fxj8rc" path="res://scripts/obstacles/PipeSpawner.gd" id="4_spawner_script"]
+[ext_resource type="PackedScene" path="res://scenes/obstacles/PipePair.tscn" id="5_pipe_pair_scene"]
+[ext_resource type="PackedScene" path="res://scenes/gameplay/Bird.tscn" id="6_bird_scene"]
+[ext_resource type="PackedScene" path="res://scenes/gameplay/Ground.tscn" id="7_ground_scene"]
+[ext_resource type="PackedScene" path="res://scenes/ui/MainMenu.tscn" id="8_main_menu_scene"]
+[ext_resource type="PackedScene" path="res://scenes/ui/HUD.tscn" id="9_hud_scene"]
+[ext_resource type="PackedScene" path="res://scenes/ui/PauseMenu.tscn" id="10_pause_menu_scene"]
+[ext_resource type="PackedScene" path="res://scenes/ui/GameOver.tscn" id="11_game_over_scene"]
+[ext_resource type="PackedScene" path="res://scenes/ui/Settings.tscn" id="12_settings_scene"]
+[ext_resource type="PackedScene" path="res://scenes/ui/AboutMenu.tscn" id="13_about_scene"]
+
+[node name="Main" type="Node2D" unique_id=1599358890]
+script = ExtResource("1_main_script")
+
+[node name="ParallaxBackground" type="ParallaxBackground" parent="." unique_id=1194300663]
+script = ExtResource("2_parallax_script")
+
+[node name="ParallaxLayer" type="ParallaxLayer" parent="ParallaxBackground" unique_id=205379351]
+motion_mirroring = Vector2(480, 0)
+
+[node name="Sprite2D" type="Sprite2D" parent="ParallaxBackground/ParallaxLayer" unique_id=312401239]
+texture = ExtResource("3_bg_tex")
+centered = false
+
+[node name="PipeSpawner" type="Node2D" parent="." unique_id=1235541871]
+unique_name_in_owner = true
+script = ExtResource("4_spawner_script")
+pipe_scene = ExtResource("5_pipe_pair_scene")
+
+[node name="Timer" type="Timer" parent="PipeSpawner" unique_id=1484790160]
+wait_time = 1.8
+
+[node name="Bird" parent="." unique_id=431083488 instance=ExtResource("6_bird_scene")]
+unique_name_in_owner = true
+position = Vector2(100, 400)
+
+[node name="Ground" parent="." unique_id=1255158743 instance=ExtResource("7_ground_scene")]
+position = Vector2(240, 800)
+
+[node name="UI" type="CanvasLayer" parent="." unique_id=145318527]
+
+[node name="MainMenu" parent="UI" unique_id=94152694 instance=ExtResource("8_main_menu_scene")]
+unique_name_in_owner = true
+
+[node name="HUD" parent="UI" unique_id=1743330806 instance=ExtResource("9_hud_scene")]
+unique_name_in_owner = true
+visible = false
+
+[node name="PauseMenu" parent="UI" unique_id=328178829 instance=ExtResource("10_pause_menu_scene")]
+unique_name_in_owner = true
+visible = false
+
+[node name="GameOver" parent="UI" unique_id=209705841 instance=ExtResource("11_game_over_scene")]
+unique_name_in_owner = true
+visible = false
+
+[node name="Settings" parent="UI" unique_id=1269457562 instance=ExtResource("12_settings_scene")]
+unique_name_in_owner = true
+visible = false
+
+[node name="AboutMenu" parent="UI" unique_id=1369457563 instance=ExtResource("13_about_scene")]
+unique_name_in_owner = true
+visible = false
