@@ -60,12 +60,12 @@ jobs:
           
           Write-Host "Executing Godot Export using: $godotExe"
           
-          # Run export synchronously and wait for completion
-          $p = Start-Process -FilePath $godotExe -ArgumentList @("--headless", "--export-release", "Windows Desktop", "builds\windows\FlappyBird.exe") -NoNewWindow -PassThru -Wait
+          # Execute Godot export directly with proper quoted string argument
+          & "$godotExe" --headless --export-release "Windows Desktop" "builds\windows\FlappyBird.exe"
           
-          if ($p.ExitCode -ne 0) {
-              Write-Error "Godot export failed with exit code $($p.ExitCode)"
-              exit $p.ExitCode
+          if ($LASTEXITCODE -ne 0) {
+              Write-Error "Godot export failed with exit code $LASTEXITCODE"
+              exit $LASTEXITCODE
           }
           
           # Verify FlappyBird.exe was generated
