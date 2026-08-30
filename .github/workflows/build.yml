@@ -36,45 +36,34 @@ jobs:
           unzip -q Godot_v${{ env.GODOT_VERSION }}-stable_export_templates.tpz
           mv templates/* ~/.local/share/godot/export_templates/${{ env.GODOT_VERSION }}.stable/
 
-      - name: Export Windows Project (Standalone EXE with Embedded Assets)
+      - name: Export Standalone Windows EXE
         run: |
-          mkdir -p builds/windows release
-          godot --headless --export-release "Windows Desktop" builds/windows/FlappyBird.exe
-          cp builds/windows/FlappyBird.exe release/FlappyBird.exe
-
-      - name: Package Windows ZIP
-        run: |
-          cd builds/windows
-          zip -r ../../release/FlappyBird-Windows.zip .
-          cd ../..
+          mkdir -p release builds/windows
+          godot --headless --export-release "Windows Desktop" release/FlappyBird.exe
+          cp release/FlappyBird.exe builds/windows/FlappyBird.exe
 
       - name: Upload Windows Artifact to Actions
         uses: actions/upload-artifact@v4
         with:
-          name: FlappyBird-Windows
+          name: FlappyBird-Windows-EXE
           path: release/FlappyBird.exe
 
-      - name: Publish GitHub Release (Latest)
+      - name: Publish GitHub Release (FlappyBird.exe)
         uses: softprops/action-gh-release@v2
         with:
-          files: |
-            release/FlappyBird.exe
-            release/FlappyBird-Windows.zip
+          files: release/FlappyBird.exe
           tag_name: v1.0.0
-          name: "FLAPPY BIRD 2D v1.0.0 (Windows Build)"
+          name: "FLAPPY BIRD 2D v1.0.0 (Windows EXE)"
           draft: false
           prerelease: false
           body: |
-            ## 🎮 FLAPPY BIRD 2D (Windows Desktop)
+            ## 🎮 FLAPPY BIRD 2D (Windows Standalone EXE)
             
-            Game Flappy Bird 2D siap dimainkan langsung di Windows (Portable / Standalone)!
+            Game Flappy Bird 2D siap dimainkan langsung di Windows!
             
-            ### 📥 Pilihan Download:
-            1. **`FlappyBird.exe`** (Langsung download & klik buka/Run as Administrator untuk langsung main, tanpa perlu extract!).
-            2. **`FlappyBird-Windows.zip`** (Paket arsip ZIP lengkap).
-            
-            ### 💻 Cara Main:
-            - Cukup klik/double-click pada **`FlappyBird.exe`** (bisa juga klik kanan -> *Run as administrator*).
-            - Game akan langsung terbuka dan siap dimainkan! 🐦✨
+            ### 📥 Cara Download & Main:
+            1. Download file **`FlappyBird.exe`** di bagian **Assets** di bawah.
+            2. Double-click (atau klik kanan -> *Run as administrator*) pada **`FlappyBird.exe`**.
+            3. Game langsung terbuka tanpa perlu extract atau install apa pun! 🐦✨
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
