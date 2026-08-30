@@ -29,22 +29,53 @@ jobs:
         run: |
           choco install innosetup -y --no-progress
 
-      - name: Setup Godot Linux for Headless Export in WSL/Bash
-        shell: bash
+      - name: Download & Setup Godot ${{ env.GODOT_VERSION }}
+        shell: pwsh
         run: |
-          mkdir -p ~/.local/share/godot/export_templates/${{ env.GODOT_VERSION }}.stable
-          curl -sSL -o godot.zip https://github.com/godotengine/godot/releases/download/${{ env.GODOT_VERSION }}-stable/Godot_v${{ env.GODOT_VERSION }}-stable_linux.x86_64.zip
-          unzip -q godot.zip
-          chmod +x Godot_v${{ env.GODOT_VERSION }}-stable_linux.x86_64
-          mv Godot_v${{ env.GODOT_VERSION }}-stable_linux.x86_64 /usr/bin/godot
+          $templatesPath = "$env:APPDATA\Godot\export_templates\${{ env.GODOT_VERSION }}.stable"
+          New-Item -ItemType Directory -Force -Path $templatesPath
           
-          curl -sSL -o templates.tpz https://github.com/godotengine/godot/releases/download/${{ env.GODOT_VERSION }}-stable/Godot_v${{ env.GODOT_VERSION }}-stable_export_templates.tpz
-          unzip -q templates.tpz
-          mv templates/* ~/.local/share/godot/export_templates/${{ env.GODOT_VERSION }}.stable/
+          # Download Godot Engine for Windows
+          Write-Host "Downloading Godot Windows binary..."
+          curl.exe -L -o godot_win.zip https://github.com/godotengine/godot/releases/download/${{ env.GODOT_VERSION }}-stable/Godot_v${{ env.GODOT_VERSION }}-stable_win64.exe.zip
+          Expand-Archive -Path godot_win.zip -DestinationPath ./godot_bin -Force
           
-          mkdir -p builds/windows release
-          godot --headless --export-release "Windows Desktop" builds/windows/FlappyBird.exe
-          cp builds/windows/FlappyBird.exe release/FlappyBird.exe
+          # Download Export Templates
+          Write-Host "Downloading Godot Export Templates..."
+          curl.exe -L -o godot_templates.tpz https://github.com/godotengine/godot/releases/download/${{ env.GODOT_VERSION }}-stable/Godot_v${{ env.GODOT_VERSION }}-stable_export_templates.tpz
+          Expand-Archive -Path godot_templates.tpz -DestinationPath ./temp_templates -Force
+          Copy-Item -Path ./temp_templates/templates/* -Destination $templatesPath -Recurse -Force
+          
+          Write-Host "Godot and Templates setup complete!"
+
+      - name: Export Windows Standalone EXE
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path "builds\windows", "release"
+          
+          $godotExe = (Get-ChildItem -Path ./godot_bin -Filter "*console.exe").FullName
+          if (-not $godotExe) {
+              $godotExe = (Get-ChildItem -Path ./godot_bin -Filter "*.exe").FullName[0]
+          }
+          
+          Write-Host "Executing Godot Export using: $godotExe"
+          
+          # Run export synchronously and wait for completion
+          $p = Start-Process -FilePath $godotExe -ArgumentList @("--headless", "--export-release", "Windows Desktop", "builds\windows\FlappyBird.exe") -NoNewWindow -PassThru -Wait
+          
+          if ($p.ExitCode -ne 0) {
+              Write-Error "Godot export failed with exit code $($p.ExitCode)"
+              exit $p.ExitCode
+          }
+          
+          # Verify FlappyBird.exe was generated
+          if (Test-Path "builds\windows\FlappyBird.exe") {
+              Write-Host "FlappyBird.exe generated successfully! Size: $((Get-Item 'builds\windows\FlappyBird.exe').Length) bytes"
+              Copy-Item "builds\windows\FlappyBird.exe" "release\FlappyBird.exe" -Force
+          } else {
+              Write-Error "FlappyBird.exe not found after export!"
+              exit 1
+          }
 
       - name: Compile Windows 11 Administrator Installer (Inno Setup)
         shell: pwsh
@@ -53,7 +84,12 @@ jobs:
           & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" ..\..\installer\installer.iss
           cd ..\..
           
-          Get-ChildItem -Path release\
+          if (Test-Path "release\FlappyBird-Setup-v1.0.0.exe") {
+              Write-Host "Installer built successfully! Size: $((Get-Item 'release\FlappyBird-Setup-v1.0.0.exe').Length) bytes"
+          } else {
+              Write-Error "Installer binary was not created!"
+              exit 1
+          }
 
       - name: Upload Installer Artifact
         uses: actions/upload-artifact@v4
