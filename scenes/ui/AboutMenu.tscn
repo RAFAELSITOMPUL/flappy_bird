@@ -1,4 +1,4 @@
-﻿[gd_scene load_steps=10 format=3]
+[gd_scene load_steps=10 format=3]
 
 [ext_resource type="Script" path="res://scripts/ui/AboutMenu.gd" id="1_about_script"]
 [ext_resource type="Texture2D" path="res://assets/textures/button_normal.png" id="2_btn_norm"]
