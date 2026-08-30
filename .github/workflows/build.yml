@@ -1,4 +1,4 @@
-name: Build & Release Flappy Bird
+﻿name: Build & Release Flappy Bird
 
 on:
   push:
@@ -24,19 +24,29 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
-
-      - name: Setup Godot & Export Templates
-        uses: abarreno/godot-export@v3.0.0
         with:
-          godot_version: ${{ env.GODOT_VERSION }}
-          godot_channel: stable
-          preset: "Windows Desktop"
-          project_path: ${{ env.PROJECT_PATH }}
+          lfs: true
 
-      - name: Create Windows ZIP Archive
+      - name: Setup Godot ${{ env.GODOT_VERSION }}
+        run: |
+          mkdir -p ~/.local/share/godot/export_templates/${{ env.GODOT_VERSION }}.stable
+          curl -LO https://github.com/godotengine/godot/releases/download/${{ env.GODOT_VERSION }}-stable/Godot_v${{ env.GODOT_VERSION }}-stable_linux.x86_64.zip
+          unzip Godot_v${{ env.GODOT_VERSION }}-stable_linux.x86_64.zip
+          mv Godot_v${{ env.GODOT_VERSION }}-stable_linux.x86_64 /usr/local/bin/godot
+          
+          curl -LO https://github.com/godotengine/godot/releases/download/${{ env.GODOT_VERSION }}-stable/Godot_v${{ env.GODOT_VERSION }}-stable_export_templates.tpz
+          unzip Godot_v${{ env.GODOT_VERSION }}-stable_export_templates.tpz
+          mv templates/* ~/.local/share/godot/export_templates/${{ env.GODOT_VERSION }}.stable/
+
+      - name: Export Windows Project
+        run: |
+          mkdir -p builds/windows
+          godot --headless --export-release "Windows Desktop" builds/windows/FlappyBird.exe
+
+      - name: Package Windows ZIP
         run: |
           mkdir -p release
-          cd builds/windows/ || cd build/windows/ || true
+          cd builds/windows
           zip -r ../../release/FlappyBird-Windows.zip .
           cd ../..
 
@@ -52,8 +62,10 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
+        with:
+          lfs: true
 
-      - name: Setup Java JDK
+      - name: Setup Java JDK 17
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
@@ -62,18 +74,28 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Setup Godot & Export Android APK
-        uses: abarreno/godot-export@v3.0.0
-        with:
-          godot_version: ${{ env.GODOT_VERSION }}
-          godot_channel: stable
-          preset: "Android"
-          project_path: ${{ env.PROJECT_PATH }}
-
-      - name: Prepare APK Release Artifact
+      - name: Setup Godot ${{ env.GODOT_VERSION }} & Export Templates
         run: |
-          mkdir -p release
-          find . -name "*.apk" -exec cp {} release/FlappyBird-Android.apk \;
+          mkdir -p ~/.local/share/godot/export_templates/${{ env.GODOT_VERSION }}.stable
+          curl -LO https://github.com/godotengine/godot/releases/download/${{ env.GODOT_VERSION }}-stable/Godot_v${{ env.GODOT_VERSION }}-stable_linux.x86_64.zip
+          unzip Godot_v${{ env.GODOT_VERSION }}-stable_linux.x86_64.zip
+          mv Godot_v${{ env.GODOT_VERSION }}-stable_linux.x86_64 /usr/local/bin/godot
+          
+          curl -LO https://github.com/godotengine/godot/releases/download/${{ env.GODOT_VERSION }}-stable/Godot_v${{ env.GODOT_VERSION }}-stable_export_templates.tpz
+          unzip Godot_v${{ env.GODOT_VERSION }}-stable_export_templates.tpz
+          mv templates/* ~/.local/share/godot/export_templates/${{ env.GODOT_VERSION }}.stable/
+
+      - name: Generate Debug Keystore for Android Signing
+        run: |
+          keytool -keyalg RSA -genkeypair -alias androiddebugkey -keypass android -keystore debug.keystore -storepass android -dname "CN=Android Debug,O=Android,C=US" -validity 9999 -deststoretype pkcs12
+          mkdir -p ~/.android
+          cp debug.keystore ~/.android/debug.keystore
+
+      - name: Export Android APK
+        run: |
+          mkdir -p builds/android release
+          godot --headless --export-release "Android" builds/android/FlappyBird-Android.apk || godot --headless --export-debug "Android" builds/android/FlappyBird-Android.apk
+          cp builds/android/FlappyBird-Android.apk release/FlappyBird-Android.apk
 
       - name: Upload Android Artifact
         uses: actions/upload-artifact@v4
@@ -86,6 +108,8 @@ jobs:
     needs: [build-windows, build-android]
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Download Windows Artifact
         uses: actions/download-artifact@v4
@@ -109,7 +133,7 @@ jobs:
           draft: false
           prerelease: false
           body: |
-            ## 🎮 FLAPPY BIRD 2D (Godot Engine 4.3)
+            ## 🎮 FLAPPY BIRD 2D (Godot Engine ${{ env.GODOT_VERSION }})
 
             ### 📱 Android Smartphone
             - Download `FlappyBird-Android.apk`
